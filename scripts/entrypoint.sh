@@ -108,7 +108,8 @@ if [ ! -f "$INITALIZED" ]; then
   for I_ACCOUNT in $(env | grep '^ACCOUNT_')
   do
     ACCOUNT_NAME=$(echo "$I_ACCOUNT" | cut -d'=' -f1 | sed 's/ACCOUNT_//g' | tr '[:upper:]' '[:lower:]')
-    ACCOUNT_PASSWORD=$(echo "$I_ACCOUNT" | sed 's/^[^=]*=//g')
+    ACCOUNT_PASSWORD=$(echo "$I_ACCOUNT" | sed 's/ACCOUNT_PASS_"'"$ACCOUNT_NAME"'"://g')
+    # ACCOUNT_PASSWORD=$(echo "$I_ACCOUNT" | sed 's/^[^=]*=//g')
 
     ACCOUNT_UID=$(env | grep '^UID_'"$ACCOUNT_NAME" | sed 's/^[^=]*=//g')
 
@@ -122,12 +123,13 @@ if [ ! -f "$INITALIZED" ]; then
     fi
     smbpasswd -a -n "$ACCOUNT_NAME"
 
-    if echo "$ACCOUNT_PASSWORD" | grep ':$' | grep '^'"$ACCOUNT_NAME"':[0-9]*:'  >/dev/null 2>/dev/null
+    # if echo "$ACCOUNT_PASSWORD" | grep ':$' | grep '^'"$ACCOUNT_NAME"':[0-9]*:'  >/dev/null 2>/dev/null
+    # then
+    #   echo ">> ACCOUNT: found SMB Password HASH instead of plain-text password"
+    #   CLEAN_HASH=$(echo "$ACCOUNT_PASSWORD" | sed 's/^.*:[0-9]*://g')
+    #   sed -i 's/\('"$ACCOUNT_NAME"':[0-9]*:\).*/\1'"$CLEAN_HASH"'/g' /var/lib/samba/private/smbpasswd
+    if [ "$ACCOUNT_PASSWORD" -gt 0 ] 2>/dev/null; 
     then
-      echo ">> ACCOUNT: found SMB Password HASH instead of plain-text password"
-      CLEAN_HASH=$(echo "$ACCOUNT_PASSWORD" | sed 's/^.*:[0-9]*://g')
-      sed -i 's/\('"$ACCOUNT_NAME"':[0-9]*:\).*/\1'"$CLEAN_HASH"'/g' /var/lib/samba/private/smbpasswd
-    else
       echo -e "$ACCOUNT_PASSWORD\n$ACCOUNT_PASSWORD" | passwd "$ACCOUNT_NAME"
       echo -e "$ACCOUNT_PASSWORD\n$ACCOUNT_PASSWORD" | smbpasswd "$ACCOUNT_NAME"
     fi
